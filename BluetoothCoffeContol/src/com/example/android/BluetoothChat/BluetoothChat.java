@@ -45,8 +45,8 @@ import android.widget.Toast;
  */
 public class BluetoothChat extends Activity {
     // Debugging
-    private static final String TAG = "BluetoothChat";
-    private static final boolean D = true;
+    private static final String DEBUG_TAG = "BluetoothChat";
+    private static final boolean DEBUG = true;
 
     // Message types sent from the BluetoothChatService Handler
     public static final int MESSAGE_STATE_CHANGE = 1;
@@ -84,7 +84,7 @@ public class BluetoothChat extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(D) Log.e(TAG, "+++ ON CREATE +++");
+        if(DEBUG) Log.e(DEBUG_TAG, "+++ ON CREATE +++");
 
         // Set up the window layout
         setContentView(R.layout.main);
@@ -103,7 +103,7 @@ public class BluetoothChat extends Activity {
     @Override
     public void onStart() {
         super.onStart();
-        if(D) Log.e(TAG, "++ ON START ++");
+        if(DEBUG) Log.e(DEBUG_TAG, "++ ON START ++");
 
         // If BT is not on, request that it be enabled.
         // setupChat() will then be called during onActivityResult
@@ -119,7 +119,7 @@ public class BluetoothChat extends Activity {
     @Override
     public synchronized void onResume() {
         super.onResume();
-        if(D) Log.e(TAG, "+ ON RESUME +");
+        if(DEBUG) Log.e(DEBUG_TAG, "+ ON RESUME +");
 
         // Performing this check in onResume() covers the case in which BT was
         // not enabled during onStart(), so we were paused to enable it...
@@ -134,7 +134,7 @@ public class BluetoothChat extends Activity {
     }
 
     private void setupChat() {
-        Log.d(TAG, "setupChat()");
+        Log.d(DEBUG_TAG, "setupChat()");
 
         // Initialize the array adapter for the conversation thread
         mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
@@ -166,13 +166,13 @@ public class BluetoothChat extends Activity {
     @Override
     public synchronized void onPause() {
         super.onPause();
-        if(D) Log.e(TAG, "- ON PAUSE -");
+        if(DEBUG) Log.e(DEBUG_TAG, "- ON PAUSE -");
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if(D) Log.e(TAG, "-- ON STOP --");
+        if(DEBUG) Log.e(DEBUG_TAG, "-- ON STOP --");
     }
 
     @Override
@@ -180,11 +180,11 @@ public class BluetoothChat extends Activity {
         super.onDestroy();
         // Stop the Bluetooth chat services
         if (mChatService != null) mChatService.stop();
-        if(D) Log.e(TAG, "--- ON DESTROY ---");
+        if(DEBUG) Log.e(DEBUG_TAG, "--- ON DESTROY ---");
     }
 
     private void ensureDiscoverable() {
-        if(D) Log.d(TAG, "ensure discoverable");
+        if(DEBUG) Log.d(DEBUG_TAG, "ensure discoverable");
         if (mBluetoothAdapter.getScanMode() !=
             BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
             Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
@@ -225,7 +225,7 @@ public class BluetoothChat extends Activity {
                 String message = view.getText().toString();
                 sendMessage(message);
             }
-            if(D) Log.i(TAG, "END onEditorAction");
+            if(DEBUG) Log.i(DEBUG_TAG, "END onEditorAction");
             return true;
         }
     };
@@ -246,7 +246,7 @@ public class BluetoothChat extends Activity {
         public void handleMessage(Message msg) {
             switch (msg.what) {
             case MESSAGE_STATE_CHANGE:
-                if(D) Log.i(TAG, "MESSAGE_STATE_CHANGE: " + msg.arg1);
+                if(DEBUG) Log.i(DEBUG_TAG, "MESSAGE_STATE_CHANGE: " + msg.arg1);
                 switch (msg.arg1) {
                 case BluetoothChatService.STATE_CONNECTED:
                     setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
@@ -288,7 +288,7 @@ public class BluetoothChat extends Activity {
     };
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(D) Log.d(TAG, "onActivityResult " + resultCode);
+        if(DEBUG) Log.d(DEBUG_TAG, "onActivityResult " + resultCode);
         switch (requestCode) {
         case REQUEST_CONNECT_DEVICE_SECURE:
             // When DeviceListActivity returns with a device to connect
@@ -309,7 +309,7 @@ public class BluetoothChat extends Activity {
                 setupChat();
             } else {
                 // User did not enable Bluetooth or an error occurred
-                Log.d(TAG, "BT not enabled");
+                Log.d(DEBUG_TAG, "BT not enabled");
                 Toast.makeText(this, R.string.bt_not_enabled_leaving, Toast.LENGTH_SHORT).show();
                 finish();
             }
