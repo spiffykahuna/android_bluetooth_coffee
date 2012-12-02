@@ -16,8 +16,17 @@
 
 package com.example.android.BluetoothChat;
 
+
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.example.android.BluetoothChat.CommandEditDialogFragment.CommandEditDialogListener;
+
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.DialogFragment;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
@@ -32,6 +41,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -43,7 +53,8 @@ import android.widget.Toast;
 /**
  * This is the main Activity that displays the current chat session.
  */
-public class BluetoothChat extends Activity {
+public class BluetoothCoffeControl extends Activity 
+						implements CommandEditDialogFragment.CommandEditDialogListener{
     // Debugging
     private static final String DEBUG_TAG = "BluetoothChat";
     private static final boolean DEBUG = true;
@@ -80,7 +91,8 @@ public class BluetoothChat extends Activity {
     // Member object for the chat services
     private BluetoothChatService mChatService = null;
 
-
+    Map<Integer, String> COMMANDS = null;
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,6 +100,16 @@ public class BluetoothChat extends Activity {
 
         // Set up the window layout
         setContentView(R.layout.main);
+        
+        
+        // add default function buttons commands
+        COMMANDS =	new HashMap<Integer, String>() {{ 
+			        put(R.id.button_cmd1, getString(R.string.cmd1));
+			        put(R.id.button_cmd2, getString(R.string.cmd2));
+			        put(R.id.button_cmd3, getString(R.string.cmd3));
+			        put(R.id.button_cmd4, getString(R.string.cmd4));
+			        put(R.id.button_cmd5, getString(R.string.cmd5));
+	    }};
 
         // Get local Bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -155,6 +177,8 @@ public class BluetoothChat extends Activity {
                 sendMessage(message);
             }
         });
+        
+        initFuncButtons();
 
         // Initialize the BluetoothChatService to perform bluetooth connections
         mChatService = new BluetoothChatService(this, mHandler);
@@ -163,7 +187,43 @@ public class BluetoothChat extends Activity {
         mOutStringBuffer = new StringBuffer("");
     }
 
-    @Override
+    private void initFuncButtons() {
+    	
+		
+		
+    	OnClickListener buttonListener = new OnClickListener() {
+    		@Override    		
+			public void onClick(View v) {
+				int id = v.getId();
+				if (COMMANDS.containsKey(id)) {
+					// send message to other side
+					sendMessage(COMMANDS.get(id));					
+				}
+				
+			}
+    		
+    	};
+    	
+    	OnLongClickListener buttonLongLister = new OnLongClickListener() {			
+			@Override
+			public boolean onLongClick(View v) {
+				editCommandDialog(v);
+				return true;
+			}
+		};
+		
+    	Button currButton = null;
+    	for(int id: COMMANDS.keySet()) {
+    		 currButton = (Button) findViewById(id);
+    		 if(currButton != null) {
+    			 currButton.setOnClickListener(buttonListener);
+    			 currButton.setOnLongClickListener(buttonLongLister);
+    		 }
+    	}	
+		
+	}
+
+	@Override
     public synchronized void onPause() {
         super.onPause();
         if(DEBUG) Log.e(DEBUG_TAG, "- ON PAUSE -");
@@ -342,17 +402,58 @@ public class BluetoothChat extends Activity {
             serverIntent = new Intent(this, DeviceListActivity.class);
             startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_SECURE);
             return true;
-        case R.id.insecure_connect_scan:
-            // Launch the DeviceListActivity to see devices and do scan
-            serverIntent = new Intent(this, DeviceListActivity.class);
-            startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_INSECURE);
-            return true;
-        case R.id.discoverable:
-            // Ensure this device is discoverable by others
-            ensureDiscoverable();
-            return true;
+//        case R.id.insecure_connect_scan:
+//            // Launch the DeviceListActivity to see devices and do scan
+//            serverIntent = new Intent(this, DeviceListActivity.class);
+//            startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_INSECURE);
+//            return true;
+//        case R.id.discoverable:
+//            // Ensure this device is discoverable by others
+//            ensureDiscoverable();
+//            return true;
         }
         return false;
     }
+    
+    public void editCommandDialog(View button) {
+        DialogFragment newFragment = new CommandEditDialogFragment(button);
+        newFragment.show(getFragmentManager(), "edit_function_button_fragment");
+    }
+    
+    
+    /**
+     * Callback after event, when {@link CommandEditDialogFragment} instance positively confirms edit action
+     * @param	dialog - instance of {@link CommandEditDialogFragment} that has string of a new command
+     *  				 and button id, that called this dialog.
+     */
+	@Override
+	public void onDialogPositiveClick(DialogFragment dialog) {
+		try {
+			CommandEditDialogFragment editDialog = (CommandEditDialogFragment) dialog;
+			String newCommand = editDialog.getCommandTextField().getText().toString();
+			int commandButtonId = editDialog.getCommandButton().getId();
+			
+			if(COMMANDS.containsKey(commandButtonId)) {
+				COMMANDS.put(commandButtonId, newCommand);
+			}
+			
+		} catch(ClassCastException cce) {
+			throw new ClassCastException(dialog.toString() + " should be CommandEditDialogFragment instance");
+		}		
+	}
+
+	@Override
+	public void onDialogNegativeClick(DialogFragment dialog) {
+		// some action here, at the moment this is not used.
+		throw new UnsupportedOperationException("negative edit dialog click is not handled at the moment");
+	}
+
+	@Override
+	public CharSequence getCommandByButtonId(int buttonId) {
+		if(COMMANDS.containsKey(buttonId)) {
+			return COMMANDS.get(buttonId);
+		}
+		return new String("");
+	}
 
 }
