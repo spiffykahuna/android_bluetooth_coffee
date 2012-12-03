@@ -6,7 +6,7 @@
     
     <EditText
         android:id="@+id/command_edit_dialog_command_text"
-        android:inputType="textMultiLine"
+        android:inputType="textCapCharacters"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
